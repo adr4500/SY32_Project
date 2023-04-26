@@ -16,63 +16,6 @@ from pathlib import Path
 # images = Path(folder_dir).glob('*.jpg')
 
 
-def crop_images(input_path, output_path, crop_size=(160, 240), overlap=0.2):
-    """
-    Découpe toutes les images du dossier spécifié par input_path en plusieurs images
-    de taille crop_size, avec un chevauchement de overlap, et enregistre ces images
-    dans le dossier spécifié par output_path.
-    """
-    # Vérifie que le dossier output_path existe, sinon le crée.
-    if not os.path.exists(output_path):
-        os.makedirs(output_path)
-
-    # Liste tous les fichiers du dossier input_path.
-    files = os.listdir(input_path)
-
-    # Parcourt tous les fichiers du dossier input_path.
-    for file in files:
-        # Vérifie que le fichier est une image.
-        if file.endswith(".jpg") or file.endswith(".jpeg") or file.endswith(".png"):
-            # Ouvre l'image.
-            image_path = os.path.join(input_path, file)
-            image = Image.open(image_path)
-
-            # Obtient les dimensions de l'image.
-            width, height = image.size
-
-            # Initialise les coordonnées de départ pour le crop.
-            y_start = 0
-
-            # Parcourt toutes les lignes de l'image.
-            while y_start < height:
-                x_start = 0
-                # Parcourt toutes les colonnes de l'image.
-                while x_start < width:
-                    # Calcule les coordonnées de fin du crop.
-                    x_end = min(x_start + crop_size[0], width)
-                    y_end = min(y_start + crop_size[1], height)
-
-                    # Effectue le crop.
-                    cropped_image = image.crop((x_start, y_start, x_end, y_end))
-
-                    # Construit le nom de l'image enregistrée.
-                    i = y_start // (crop_size[1] - overlap)
-                    j = x_start // (crop_size[0] - overlap)
-                    name = f"{file.split('.')[0]}_{i}_{j}_{crop_size[1]}_{crop_size[0]}.jpg"
-
-                    # Enregistre l'image cropée.
-                    #print(cropped_image.size[0])
-                    if cropped_image.size[0]>=160 and cropped_image.size[1]>= 160:
-                        cropped_image.save(os.path.join(output_path, name))
-
-                    # Passe à la prochaine colonne.
-                    x_start += crop_size[0] - overlap
-
-                # Passe à la prochaine ligne.
-                y_start += crop_size[1] - overlap
-
-#crop_images("dataset-original/train/images/dossier_de_test","dataset-original/train/images/dossier_de_test/output")
-
 def show_same_prefix_images(folder_path, prefix):
     """
     Affiche toutes les images du dossier spécifié par folder_path
@@ -129,7 +72,109 @@ def resize_images(img_folder, output_folder, scale_factors):
         for scale_factor in scale_factors:
             # Redimensionner l'image en conservant les proportions
             img_resized = cv2.resize(img, None, fx=scale_factor, fy=scale_factor, interpolation=cv2.INTER_CUBIC)
-
+            num, denom = scale_factor.as_integer_ratio()
             # Enregistrer l'image redimensionnée dans le dossier de sortie
-            output_filename = f"{os.path.splitext(filename)[0]}_{scale_factor}.jpg"
+            output_filename = f"{os.path.splitext(filename)[0]}-{num}-{denom}.jpg"
             cv2.imwrite(os.path.join(output_folder, output_filename), img_resized)
+            
+            
+img_folder = "dataset-original/train/images/dossier_de_test/originale"
+output_folder = "dataset-original/train/images/dossier_de_test/scaled_images"
+scale_factors = [0.5, 0.25, 1]
+#resize_images(img_folder, output_folder, scale_factors)
+
+
+
+def crop_images(input_path, output_path, crop_size=(160, 240), overlap=0.2):
+    """
+    Découpe toutes les images du dossier spécifié par input_path en plusieurs images
+    de taille crop_size, avec un chevauchement de overlap, et enregistre ces images
+    dans le dossier spécifié par output_path.
+    """
+    # Vérifie que le dossier output_path existe, sinon le crée.
+    if not os.path.exists(output_path):
+        os.makedirs(output_path)
+
+    # Liste tous les fichiers du dossier input_path.
+    files = os.listdir(input_path)
+
+    # Parcourt tous les fichiers du dossier input_path.
+    for file in files:
+        # Vérifie que le fichier est une image.
+        if file.endswith(".jpg") or file.endswith(".jpeg") or file.endswith(".png"):
+            # Ouvre l'image.
+            image_path = os.path.join(input_path, file)
+            image = Image.open(image_path)
+            #on recup le facteur d'echelle de l'image pour faire la conversion vers image originale
+            img_name_without_ext = os.path.splitext(os.path.basename(image_path))[0]
+            #je recup le nominateur et denom  du facteur d'echelle dans le nom du fichier de l'image
+            num= img_name_without_ext.split("-")[1]
+            denom= img_name_without_ext.split("-")[-1]
+            indice=int(num)/int(denom)
+            #print(indice)
+            # Obtient les dimensions de l'image.
+            width, height = image.size
+
+            # Initialise les coordonnées de départ pour le crop.
+            y_start = 0
+
+            # Parcourt toutes les lignes de l'image.
+            while y_start < height:
+                x_start = 0
+                # Parcourt toutes les colonnes de l'image.
+                while x_start < width:
+                    # Calcule les coordonnées de fin du crop.
+                    x_end = min(x_start + crop_size[0], width)
+                    y_end = min(y_start + crop_size[1], height)
+
+                    # Effectue le crop.
+                    cropped_image = image.crop((x_start, y_start, x_end, y_end))
+
+                    # Construit le nom de l'image enregistrée.
+                    i = y_start // (crop_size[1] - overlap)
+                    i=i/indice
+                    j = x_start // (crop_size[0] - overlap)
+                    j=j/indice
+                    name = f"{file.split('.')[0]}_{i}_{j}_{crop_size[1]/indice}_{crop_size[0]/indice}.jpg"
+
+                    #Enregistre l'image cropée.
+                    #print(cropped_image.size[0])
+                    if cropped_image.size[0]>=160 and cropped_image.size[1]>= 160:
+                        cropped_image.save(os.path.join(output_path, name))
+
+                    # Passe à la prochaine colonne.
+                    x_start += crop_size[0] - overlap
+
+                # Passe à la prochaine ligne.
+                y_start += crop_size[1] - overlap
+
+#crop_images("dataset-original/train/images/dossier_de_test/scaled_images","dataset-original/train/images/dossier_de_test/output")
+
+ 
+ 
+ 
+ 
+ 
+ 
+ 
+ 
+ 
+ 
+ 
+ 
+ 
+ 
+ 
+ 
+ 
+ 
+ 
+            
+            
+            
+            
+            
+            
+            
+            
+            
