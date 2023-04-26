@@ -236,3 +236,8 @@ def crop_to_ratio(folder_path):
             image.save(cropped_image_path)
             
 #crop_to_ratio('dataset-premierclassifieur/images_transfomes/crop/pos')
+
+
+
+
+
