@@ -110,3 +110,26 @@ def show_same_prefix_images(folder_path, prefix):
 
 #show_same_prefix_images("dataset-original/train/images/dossier_de_test/output",'abigotte')
 
+
+def resize_images(img_folder, output_folder, scale_factors):
+    
+    
+    # Vérifier si le dossier de sortie existe et le créer s'il n'existe pas
+    if not os.path.exists(output_folder):
+        os.makedirs(output_folder)
+
+    # Lister les fichiers dans le dossier d'entrée
+    file_list = os.listdir(img_folder)
+
+    for filename in file_list:
+        # Lire l'image d'origine
+        img = cv2.imread(os.path.join(img_folder, filename))
+
+        # Appliquer chaque facteur d'échelle
+        for scale_factor in scale_factors:
+            # Redimensionner l'image en conservant les proportions
+            img_resized = cv2.resize(img, None, fx=scale_factor, fy=scale_factor, interpolation=cv2.INTER_CUBIC)
+
+            # Enregistrer l'image redimensionnée dans le dossier de sortie
+            output_filename = f"{os.path.splitext(filename)[0]}_{scale_factor}.jpg"
+            cv2.imwrite(os.path.join(output_folder, output_filename), img_resized)
