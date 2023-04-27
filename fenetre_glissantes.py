@@ -72,20 +72,20 @@ def resize_images(img_folder, output_folder, scale_factors):
         for scale_factor in scale_factors:
             # Redimensionner l'image en conservant les proportions
             img_resized = cv2.resize(img, None, fx=scale_factor, fy=scale_factor, interpolation=cv2.INTER_CUBIC)
-            num, denom = scale_factor.as_integer_ratio()
+            #num, denom = scale_factor.as_integer_ratio()
             # Enregistrer l'image redimensionnée dans le dossier de sortie
-            output_filename = f"{os.path.splitext(filename)[0]}-{num}-{denom}.jpg"
+            output_filename = f"{os.path.splitext(filename)[0]}-{float(scale_factor)}.jpg"
             cv2.imwrite(os.path.join(output_folder, output_filename), img_resized)
             
             
-img_folder = "dataset-original/train/images/dossier_de_test/originale"
-output_folder = "dataset-original/train/images/dossier_de_test/scaled_images"
-scale_factors = [0.5, 0.25, 1]
+img_folder = "dataset-original/train/images/pos"
+output_folder = "dataset-fenetre_glissante/resized_images"
+scale_factors = [0.5, 0.25, 0.75, 1, 1.5]
 #resize_images(img_folder, output_folder, scale_factors)
 
 
 
-def crop_images(input_path, output_path, crop_size=(160, 240), overlap=0.2):
+def crop_images(input_path, output_path, crop_size=(160, 240), overlap=0.5):
     """
     Découpe toutes les images du dossier spécifié par input_path en plusieurs images
     de taille crop_size, avec un chevauchement de overlap, et enregistre ces images
@@ -108,10 +108,8 @@ def crop_images(input_path, output_path, crop_size=(160, 240), overlap=0.2):
             #on recup le facteur d'echelle de l'image pour faire la conversion vers image originale
             img_name_without_ext = os.path.splitext(os.path.basename(image_path))[0]
             #je recup le nominateur et denom  du facteur d'echelle dans le nom du fichier de l'image
-            num= img_name_without_ext.split("-")[1]
-            denom= img_name_without_ext.split("-")[-1]
-            indice=int(num)/int(denom)
-            #print(indice)
+            indice= img_name_without_ext.split("-")[-1]
+            indice=float(indice)
             # Obtient les dimensions de l'image.
             width, height = image.size
 
@@ -131,11 +129,9 @@ def crop_images(input_path, output_path, crop_size=(160, 240), overlap=0.2):
                     cropped_image = image.crop((x_start, y_start, x_end, y_end))
 
                     # Construit le nom de l'image enregistrée.
-                    i = y_start // (crop_size[1] - overlap)
-                    i=i/indice
-                    j = x_start // (crop_size[0] - overlap)
-                    j=j/indice
-                    name = f"{file.split('.')[0]}_{i}_{j}_{crop_size[1]/indice}_{crop_size[0]/indice}.jpg"
+                    i = y_start/indice
+                    j = x_start/indice
+                    name = f"{file.split('-')[0]}-{i}-{j}-{crop_size[1]/indice}-{crop_size[0]/indice}.jpg"
 
                     #Enregistre l'image cropée.
                     #print(cropped_image.size[0])
@@ -143,12 +139,12 @@ def crop_images(input_path, output_path, crop_size=(160, 240), overlap=0.2):
                         cropped_image.save(os.path.join(output_path, name))
 
                     # Passe à la prochaine colonne.
-                    x_start += crop_size[0] - overlap
+                    x_start += crop_size[0] - (overlap*crop_size[0])
 
                 # Passe à la prochaine ligne.
-                y_start += crop_size[1] - overlap
+                y_start += crop_size[1] - (overlap*crop_size[1])
 
-#crop_images("dataset-original/train/images/dossier_de_test/scaled_images","dataset-original/train/images/dossier_de_test/output")
+crop_images("dataset-fenetre_glissante/resized_images","dataset-fenetre_glissante/crop_fenetre_a_classifier")
 
  
  
