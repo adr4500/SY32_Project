@@ -135,7 +135,7 @@ def crop_images(input_path, output_path, crop_size=(160, 240), overlap=0.5):
 
                     #Enregistre l'image cropée.
                     #print(cropped_image.size[0])
-                    if cropped_image.size[0]>=160 and cropped_image.size[1]>= 160:
+                    if (cropped_image.size[0]==240 and cropped_image.size[1]== 160)or(cropped_image.size[0]==160 and cropped_image.size[1]== 240):
                         cropped_image.save(os.path.join(output_path, name))
 
                     # Passe à la prochaine colonne.
