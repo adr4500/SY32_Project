@@ -3,6 +3,7 @@ import tkinter.font as tkFont
 from classifieurs.classifiers import *
 from skimage.feature import hog
 from skimage import io, util
+from PIL import Image, ImageTk
 import numpy as np
 import glob
 import cv2
@@ -13,13 +14,13 @@ SIZE = 4
 class DisplayImage:
     def __init__(self):
         self.m_canvas = None
-        self.m_text_indicator = tk.StringVar()
+        self.m_text_indicator = None
         self.m_current_index = 0
         self.m_filenames = None
-
+        self.m_current_filename = None
+        self.m_window = None
+        
         self.m_save_index = 0
-
-        self.m_text_indicator.set("Image " + str(self.m_current_index + 1) + "/" + str(len(positive_images_filenames)))
     
     def next(self):
         self.m_current_index = (self.m_current_index + 1) % len(self.m_filenames)
@@ -27,18 +28,19 @@ class DisplayImage:
         self.display()
     
     def copy_image(self):
-        shutil.copyfile(self.m_filenames[self.m_current_index], "dataset-classifieur_ameliore/neg/false_positive_" + str(self.m_save_index) + ".jpg")
+        filename = self.m_filenames[self.m_current_index].split("\\")[-1]
+        shutil.copyfile(self.m_filenames[self.m_current_index], "dataset-classifieur-ameliore/neg/false_positive_" + filename)
+        self.m_current_index += 1
     
     def display(self):
         self.m_canvas.delete("all")
-        I = io.imread(self.m_filenames[self.m_current_index])
-        I = util.img_as_ubyte(I)
-        I = cv2.cvtColor(I, cv2.COLOR_BGR2RGB)
-        I = cv2.resize(I, (160*SIZE, 240*SIZE))
-        I = tk.Image.fromarray(I)
-        I = tk.ImageTk.PhotoImage(I)
+        I = Image.open(self.m_filenames[self.m_current_index])
+        I = I.resize((160*SIZE, 240*SIZE), Image.Resampling.LANCZOS)
+        I = ImageTk.PhotoImage(master = self.m_window, image=I)
         self.m_canvas.create_image(0, 0, anchor=tk.NW, image=I)
         self.m_canvas.image = I
+        self.m_text_indicator.set("Image " + str(self.m_current_index + 1) + "/" + str(len(positive_images_filenames)))
+        self.m_current_filename.set(self.m_filenames[self.m_current_index].split("\\")[-1])
     
     def copy_and_next(self):
         self.copy_image()
@@ -53,7 +55,7 @@ Y_data = []
 print("Importing train data...")
 
 # Import positive images
-for filename in glob.glob("dataset-premierclassifieur/images_transfomes/images_pretes_a_etre_utliser/pos/*.jpg"):
+for filename in glob.glob("dataset-classifieur-ameliore/pos/*.jpg"):
     I = io.imread(filename)
     if (I.shape[0] == 240 and I.shape[1] == 160):
         I = cv2.cvtColor(I, cv2.COLOR_BGR2GRAY)
@@ -63,7 +65,7 @@ for filename in glob.glob("dataset-premierclassifieur/images_transfomes/images_p
         Y_data.append(1)
 
 # Import negative images
-for filename in glob.glob("dataset-premierclassifieur/images_transfomes/images_pretes_a_etre_utliser/neg/*.jpg"):
+for filename in glob.glob("dataset-classifieur-ameliore/neg/*.jpg"):
     I = io.imread(filename)
     if (I.shape[0] == 240 and I.shape[1] == 160):
         I = cv2.cvtColor(I, cv2.COLOR_BGR2GRAY)
@@ -92,7 +94,7 @@ print("Importing test data...")
 X_test_data = []
 test_data_filenames = []
 
-for filename in glob.glob("dataset-xxx/*.jpg"):
+for filename in glob.glob("dataset-fenetre_glissante/crop_fenetre_a_classifier/*.jpg"):
     I = io.imread(filename)
     if (I.shape[0] == 240 and I.shape[1] == 160):
         I = cv2.cvtColor(I, cv2.COLOR_BGR2GRAY)
@@ -127,13 +129,16 @@ if (ans == "n"):
 display = DisplayImage()
 display.m_filenames = positive_images_filenames
 
-window = tk.Tk()
-window.title("False positive selector")
+display.m_window = tk.Tk()
+display.m_window.title("False positive selector")
 
-displayer = tk.Frame(window, bg="white", bd=0)
+display.m_text_indicator = tk.StringVar()
+display.m_current_filename = tk.StringVar()
+
+displayer = tk.Frame(display.m_window, bg="white", bd=0)
 displayer.pack(side=tk.LEFT, padx=0)
 
-widgets = tk.Frame(window, bg="#e6e6e6", bd=0, width=400, height=600)
+widgets = tk.Frame(display.m_window, bg="#e6e6e6", bd=0, width=400, height=600)
 widgets.pack(side=tk.RIGHT, padx=0)
 
 font = tkFont.Font(family="Poppins", size=10, weight="bold")
@@ -145,10 +150,11 @@ display.m_canvas.pack(padx=0, pady=0)
 
 # Create widgets
 
-tk.Label(widgets, text=display.m_text_indicator, bg="#e6e6e6", fg="black", font=font).pack(padx=0, pady=0)
-tk.Button(widgets, text="Positive", bg="#e6e6e6", fg="black", font=font, command=display.next).pack(padx=0, pady=0)
-tk.Button(widgets, text="Negative", bg="#e6e6e6", fg="black", font=font, command=display.copy_and_next).pack(padx=0, pady=0)
+tk.Label(widgets, textvariable=display.m_text_indicator, bg="#e6e6e6", fg="black", font=font).pack(padx=0, pady=0)
+tk.Label(widgets, textvariable=display.m_current_filename, bg="#e6e6e6", fg="black", font=font).pack(padx=0, pady=0)
+tk.Button(widgets, text="Positive", bg="#93d977", fg="black", font=font, command=display.next, width=70, height=10).pack(padx=0, pady=0)
+tk.Button(widgets, text="Negative", bg="#c7615a", fg="black", font=font, command=display.copy_and_next, width=70, height=10).pack(padx=0, pady=0)
 
 display.display()
 
-window.mainloop()
+display.m_window.mainloop()
