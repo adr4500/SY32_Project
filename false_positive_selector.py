@@ -4,6 +4,7 @@ from classifieurs.classifiers import *
 from skimage.feature import hog
 from skimage import io, util
 from PIL import Image, ImageTk
+from random import shuffle
 import numpy as np
 import glob
 import cv2
@@ -14,13 +15,12 @@ SIZE = 4
 class DisplayImage:
     def __init__(self):
         self.m_canvas = None
+        self.m_canvas2 = None
         self.m_text_indicator = None
         self.m_current_index = 0
         self.m_filenames = None
         self.m_current_filename = None
         self.m_window = None
-        
-        self.m_save_index = 0
     
     def next(self):
         self.m_current_index = (self.m_current_index + 1) % len(self.m_filenames)
@@ -30,7 +30,6 @@ class DisplayImage:
     def copy_image(self):
         filename = self.m_filenames[self.m_current_index].split("\\")[-1]
         shutil.copyfile(self.m_filenames[self.m_current_index], "dataset-classifieur-ameliore/neg/false_positive_" + filename)
-        self.m_current_index += 1
     
     def display(self):
         self.m_canvas.delete("all")
@@ -39,8 +38,14 @@ class DisplayImage:
         I = ImageTk.PhotoImage(master = self.m_window, image=I)
         self.m_canvas.create_image(0, 0, anchor=tk.NW, image=I)
         self.m_canvas.image = I
-        self.m_text_indicator.set("Image " + str(self.m_current_index + 1) + "/" + str(len(positive_images_filenames)))
+        self.m_text_indicator.set("Image " + str(self.m_current_index + 1) + "/" + str(len(self.m_filenames)))
         self.m_current_filename.set(self.m_filenames[self.m_current_index].split("\\")[-1])
+        
+        self.m_canvas2.delete("all")
+        I2 = Image.open("dataset-original\\train\images\pos\\" +self.m_filenames[self.m_current_index].split("\\")[-1].split("-")[0] + ".jpg")
+        I2 = ImageTk.PhotoImage(master = self.m_window, image=I2)
+        self.m_canvas2.create_image(0, 0, anchor=tk.NW, image=I2)
+        self.m_canvas2.image = I2
     
     def copy_and_next(self):
         self.copy_image()
@@ -120,6 +125,7 @@ number_of_positive_images = np.count_nonzero(Y_test_data == 1)
 ans = input("Positive images: " + str(number_of_positive_images) + "/" + str(len(X_test_data)) + ". Do you want to run the selector app ? (y/n) ")
 
 positive_images_filenames = test_data_filenames[Y_test_data == 1]
+shuffle(positive_images_filenames)
 
 if (ans == "n"):
     exit()
@@ -138,8 +144,11 @@ display.m_current_filename = tk.StringVar()
 displayer = tk.Frame(display.m_window, bg="white", bd=0)
 displayer.pack(side=tk.LEFT, padx=0)
 
+displayer2 = tk.Frame(display.m_window, bg="white", bd=0)
+displayer2.pack(side=tk.RIGHT, padx=0)
+
 widgets = tk.Frame(display.m_window, bg="#e6e6e6", bd=0, width=400, height=600)
-widgets.pack(side=tk.RIGHT, padx=0)
+widgets.pack(side=tk.LEFT, padx=0)
 
 font = tkFont.Font(family="Poppins", size=10, weight="bold")
 
@@ -147,6 +156,11 @@ display.m_canvas = tk.Canvas(
     displayer, width=160*SIZE, height=240*SIZE, bg="white", bd=0, relief=tk.FLAT
 )
 display.m_canvas.pack(padx=0, pady=0)
+
+display.m_canvas2 = tk.Canvas(
+    displayer2, width=1000, height=1500, bg="white", bd=0, relief=tk.FLAT
+)
+display.m_canvas2.pack(padx=0, pady=0)
 
 # Create widgets
 
