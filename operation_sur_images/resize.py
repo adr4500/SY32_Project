@@ -46,7 +46,7 @@ class label_image:
 
     def crop_and_save_images(label_folder,img_folderpostive,output_folder):
         
-        os.mkdir(output_folder)
+        os.makedirs(output_folder)
         labels = os.listdir(label_folder)
         facteur=1.1
         for label in labels:
