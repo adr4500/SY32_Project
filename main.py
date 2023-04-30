@@ -140,4 +140,3 @@ print("Training AdaBoost classifier...")
 classifier = AdaBoost(400)
 classifier.train(X_data, Y_data)
 
-print("AdaBoost classifier trained.")
