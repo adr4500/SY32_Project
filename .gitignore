@@ -127,3 +127,9 @@ dmypy.json
 
 # Pyre type checker
 .pyre/
+
+dataset-fenetre_glissante/
+dataset-classifieur-ameliore/
+dataset-dataset-premierclassifieur/
+rectangles/
+rectangles.csv
