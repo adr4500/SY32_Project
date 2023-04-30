@@ -140,8 +140,8 @@ for filename in glob.glob('dataset-original/test/*.jpg'):
     predictions = classifier.predict(X_data_image)
     scores = classifier.prediction_scores(X_data_image)
 
-    positive_images_names = np.array(names)[np.logical_and(predictions == 1, scores > 0.000)]
-    scores = scores[np.logical_and(predictions == 1, scores > 0.000)]
+    positive_images_names = np.array(names)[np.logical_and(predictions == 1, scores > 0.005)]
+    scores = scores[np.logical_and(predictions == 1, scores > 0.005)]
 
     positive_rectangles = []
 
