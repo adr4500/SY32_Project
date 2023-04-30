@@ -121,9 +121,11 @@ def get_positive(classifier, X_test_data, test_data_filenames):
     Y_test_data = classifier.predict(X_test_data)
 
     positive_images_filenames = test_data_filenames[Y_test_data == 1]
-    shuffle(positive_images_filenames)
+    
+    scores = classifier.prediction_scores(X_test_data)
+    scores = scores[Y_test_data == 1]
 
-    return positive_images_filenames
+    return positive_images_filenames, scores
 
 def import_real_rectangles():
     rectangles = []
@@ -132,8 +134,9 @@ def import_real_rectangles():
         rectangles[-1].import_rectangles()
     return rectangles
 
-def get_false_positive_rectangles(positive_images_filenames, real_rectangles):
+def get_false_positive_rectangles(positive_images_filenames, scores, real_rectangles):
     false_positive_rectangles = []
+    positive_images_filenames = positive_images_filenames[np.argsort(scores)[::-1]]
     for filename in positive_images_filenames:
         filename_nopath_noextention = filename.split("\\")[-1][:-4]
 

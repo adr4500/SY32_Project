@@ -17,8 +17,10 @@ class DisplayImage:
         self.m_canvas = None
         self.m_canvas2 = None
         self.m_text_indicator = None
+        self.m_score_text = None
         self.m_current_index = 0
         self.m_filenames = None
+        self.m_scores = None
         self.m_current_filename = None
         self.m_window = None
     
@@ -40,6 +42,7 @@ class DisplayImage:
         self.m_canvas.image = I
         self.m_text_indicator.set("Image " + str(self.m_current_index + 1) + "/" + str(len(self.m_filenames)))
         self.m_current_filename.set(self.m_filenames[self.m_current_index].split("\\")[-1])
+        self.m_score_text.set(str(self.m_scores[self.m_current_index]*100) + "%")
         
         self.m_canvas2.delete("all")
         I2 = Image.open("dataset-original\\train\images\pos\\" +self.m_filenames[self.m_current_index].split("\\")[-1].split("-")[0] + ".jpg")
@@ -99,7 +102,7 @@ print("Importing test data...")
 X_test_data = []
 test_data_filenames = []
 
-for filename in glob.glob("dataset-fenetre_glissante/crop_fenetre_a_classifier/*.jpg"):
+for filename in glob.glob("dataset-fenetre_glissante\crop_fenetre_a_classifier/*.jpg"):
     I = io.imread(filename)
     if (I.shape[0] == 240 and I.shape[1] == 160):
         I = cv2.cvtColor(I, cv2.COLOR_BGR2GRAY)
@@ -117,6 +120,7 @@ print("Test data imported.")
 print("Predicting test data...")
 
 Y_test_data = classifier.predict(X_test_data)
+scores = classifier.prediction_scores(X_test_data)
 
 print("Test data predicted.")
 
@@ -125,7 +129,7 @@ number_of_positive_images = np.count_nonzero(Y_test_data == 1)
 ans = input("Positive images: " + str(number_of_positive_images) + "/" + str(len(X_test_data)) + ". Do you want to run the selector app ? (y/n) ")
 
 positive_images_filenames = test_data_filenames[Y_test_data == 1]
-shuffle(positive_images_filenames)
+scores = scores[Y_test_data == 1]
 
 if (ans == "n"):
     exit()
@@ -134,12 +138,14 @@ if (ans == "n"):
 
 display = DisplayImage()
 display.m_filenames = positive_images_filenames
+display.m_scores = scores
 
 display.m_window = tk.Tk()
 display.m_window.title("False positive selector")
 
 display.m_text_indicator = tk.StringVar()
 display.m_current_filename = tk.StringVar()
+display.m_score_text = tk.StringVar()
 
 displayer = tk.Frame(display.m_window, bg="white", bd=0)
 displayer.pack(side=tk.LEFT, padx=0)
@@ -166,6 +172,7 @@ display.m_canvas2.pack(padx=0, pady=0)
 
 tk.Label(widgets, textvariable=display.m_text_indicator, bg="#e6e6e6", fg="black", font=font).pack(padx=0, pady=0)
 tk.Label(widgets, textvariable=display.m_current_filename, bg="#e6e6e6", fg="black", font=font).pack(padx=0, pady=0)
+tk.Label(widgets, textvariable=display.m_score_text, bg="#e6e6e6", fg="black", font=font).pack(padx=0, pady=0)
 tk.Button(widgets, text="Positive", bg="#93d977", fg="black", font=font, command=display.next, width=70, height=10).pack(padx=0, pady=0)
 tk.Button(widgets, text="Negative", bg="#c7615a", fg="black", font=font, command=display.copy_and_next, width=70, height=10).pack(padx=0, pady=0)
 

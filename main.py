@@ -115,9 +115,9 @@ print("Test data imported")
 print("Training classifier")
 classifier = get_trained_classifier()
 
-positive_images = get_positive(classifier, X_test_data, test_data_filenames)
+positive_images, scores = get_positive(classifier, X_test_data, test_data_filenames)
 
-fp = get_false_positive_rectangles(positive_images, real_rectangles)
+fp = get_false_positive_rectangles(positive_images, scores, real_rectangles)
 
 while(len(fp)/len(positive_images) > 0.1):
     print(str(len(fp))+"/"+str(len(positive_images))+" false positive")
@@ -129,7 +129,7 @@ while(len(fp)/len(positive_images) > 0.1):
     # Restart the process until there is no false positive
     print("Training classifier")
     classifier = get_trained_classifier()
-    positive_images = get_positive(classifier, X_test_data, test_data_filenames)
-    fp = get_false_positive_rectangles(positive_images, real_rectangles)
+    positive_images, scores = get_positive(classifier, X_test_data, test_data_filenames)
+    fp = get_false_positive_rectangles(positive_images, scores, real_rectangles)
 
 print("Training done !")
