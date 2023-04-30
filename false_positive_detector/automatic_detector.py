@@ -14,6 +14,9 @@ class Rectangle:
         self.y = y
         self.w = w 
         self.h = h
+    
+    def to_csv_line(self):
+        return f"{self.y},{self.x},{self.h},{self.w}"
 
 class Rectangles:
     def __init__(self, filename):
@@ -51,6 +54,26 @@ def IoU(rect1, rect2):
     iou = interArea / float(boxAArea + boxBArea - interArea)
 
     return iou
+
+def filtre_nms (rectangles, scores, tresh_iou = 0.5) :
+    # trier les boites par score de confiance decroissant
+    rectangles = rectangles[scores.argsort()[:: -1]]
+    # liste des boites que l'on garde pour cette image a l'issue du NMS
+    results = np.empty ((0 ,2) )
+    # on garde forcement la premiere boite , la plus sure
+    results = np.vstack ((results, [rectangles [0],scores[0]]) )
+    # pour toutes les boites suivantes , les comparer a celles que l'on garde
+    for n in range (1, len (rectangles)):
+        for m in range (len(results)):
+            if IoU (rectangles[n] , results[m][0]) > tresh_iou :
+                # recouvrement important ,
+                # et la boite de results_out_i a forcement un score plus haut
+                break
+            elif m == len (results) - 1 :
+                # c'etait le dernier test pour verifier si cette detection est a conserver
+                results = np.vstack((results, [rectangles[n], scores[n]]))
+
+    return results
 
 ###############################
 

@@ -71,6 +71,18 @@ class windows:
                 # Enregistrer l'image redimensionnée dans le dossier de sortie
                 output_filename = f"{os.path.splitext(filename)[0]}-{float(scale_factor)}.jpg"
                 cv2.imwrite(os.path.join(output_folder, output_filename), img_resized)
+
+    def resize_image_nosave(img, scale_factors):
+        output = []
+        # Appliquer chaque facteur d'échelle
+        for scale_factor in scale_factors:
+            # Redimensionner l'image en conservant les proportions
+            img_resized = cv2.resize(img, None, fx=scale_factor, fy=scale_factor, interpolation=cv2.INTER_CUBIC)
+            #num, denom = scale_factor.as_integer_ratio()
+            # Enregistrer l'image redimensionnée dans le dossier de sortie
+            output.append(img_resized)
+        
+        return output
             
     
 
@@ -133,7 +145,59 @@ class windows:
 
                     # Passe à la prochaine ligne.
                     y_start += crop_size[1] - (overlap*crop_size[1])
+    
+    def crop_images_nosave(images,crop_size, overlap, scale_factors, filename):
+        """
+        Découpe toutes les images d'entrée en plusieurs images
+        de taille crop_size, avec un chevauchement de overlap, et retourne deux tableaux : les images et leur noms
+        """
+        
+        output_images = []
+        output_names = []
 
+        # Remove path and extension from filename
+        filename = filename.split("\\")[-1].split(".")[0]
+
+        # Parcourt tous les fichiers du dossier input_path.
+        for i in range(len(images)):
+            image = Image.fromarray(images[i])
+            indice=scale_factors[i]
+            # Obtient les dimensions de l'image.
+            width, height = image.size
+
+            # Initialise les coordonnées de départ pour le crop.
+            y_start = 0
+
+            # Parcourt toutes les lignes de l'image.
+            while y_start < height:
+                x_start = 0
+                # Parcourt toutes les colonnes de l'image.
+                while x_start < width:
+                    # Calcule les coordonnées de fin du crop.
+                    x_end = min(x_start + crop_size[0], width)
+                    y_end = min(y_start + crop_size[1], height)
+
+                    # Effectue le crop.
+                    cropped_image = image.crop((x_start, y_start, x_end, y_end))
+
+                    # Construit le nom de l'image enregistrée.
+                    i = y_start/indice
+                    j = x_start/indice
+                    name = filename + f"-{int(i)}-{int(j)}-{int(crop_size[1]/indice)}-{int(crop_size[0]/indice)}"
+
+                    #Enregistre l'image cropée.
+                    #print(cropped_image.size[0])
+                    if (cropped_image.size[0]==240 and cropped_image.size[1]== 160)or(cropped_image.size[0]==160 and cropped_image.size[1]== 240):
+                        output_images.append(cropped_image)
+                        output_names.append(name)
+
+                    # Passe à la prochaine colonne.
+                    x_start += crop_size[0] - (overlap*crop_size[0])
+
+                # Passe à la prochaine ligne.
+                y_start += crop_size[1] - (overlap*crop_size[1])
+
+        return output_images, output_names
     
  
     

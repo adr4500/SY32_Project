@@ -81,27 +81,6 @@ else:
     pass
 
 
-print("Generating data-set for test")
-
-if os.path.exists('dataset-test'):
-    print("Le dossier existe déjà.")
-    user_input = input("Voulez-vous l'écraser ? (Oui/Non) ")
-    if user_input.lower() == 'oui':
-        #deletting data
-        shutil.rmtree('dataset-test')
-        os.makedirs('dataset-test')
-        windows_cropping("dataset-original/test",'dataset-test')
-        pass
-    else:
-        # Ajoutez ici le code pour sortir ou effectuer une autre action
-        pass
-else:
-    print("no history of data, generating..")
-    os.makedirs('dataset-test')
-    windows_cropping("dataset-original/test",'dataset-test')
-    pass
-
-
 
 #### Add false positive to train data
 
@@ -133,3 +112,57 @@ while(len(fp)/len(positive_images) > 0.1):
     fp = get_false_positive_rectangles(positive_images, scores, real_rectangles)
 
 print("Training done !")
+
+#### Process test data
+
+print("Processing test data...")
+csvfile = open('rectangles.csv', 'w')
+for filename in glob.glob('dataset-original/test/*.jpg'):
+    print("Processing " + filename)
+    img = io.imread(filename)
+    scale_factors = [0.25, 0.5, 0.75, 1, 1.5, 2]
+    overlap = 0.75
+    resized_images = windows.resize_image_nosave(img, scale_factors)
+    cropped, names = windows.crop_images_nosave(resized_images, (160, 240), 0.75, scale_factors, filename)
+
+    X_data_image = []
+
+    for i in range(len(cropped)):
+        I = np.asarray(cropped[i])
+        I = cv2.cvtColor(I, cv2.COLOR_BGR2GRAY)
+        hog_image = hog(I, orientations=8, pixels_per_cell=(16, 16), cells_per_block=(1, 1), visualize=False)
+        X_data_image.append(hog_image)
+    
+    if len(X_data_image) == 1:
+        X_data_image = [X_data_image]
+
+    X_data_image = np.array(X_data_image)
+    predictions = classifier.predict(X_data_image)
+    scores = classifier.prediction_scores(X_data_image)
+
+    positive_images_names = np.array(names)[np.logical_and(predictions == 1, scores > 0.000)]
+    scores = scores[np.logical_and(predictions == 1, scores > 0.000)]
+
+    positive_rectangles = []
+
+    for name in positive_images_names:
+        data = name.split("-")
+        w = int(float(data[4])/1.1)
+        h = int(float(data[3])/1.1)
+        x = int(float(data[2]) + w*0.1)
+        y = int(float(data[1]) + h*0.1)
+        positive_rectangles.append(Rectangle(x, y, w, h))
+    
+    if (len(positive_rectangles) != 0):
+        positive_rectangles = np.array(positive_rectangles)
+        detected = filtre_nms(positive_rectangles, scores, 0.3)
+
+        # Write in csv file
+        filename_noext_nopath = filename.split("\\")[-1].split(".")[0]
+        for detection in detected:
+            line = str(int(filename_noext_nopath)) + "," + detection[0].to_csv_line() + "," + str(detection[1]) + "\n"
+            csvfile.write(line)
+
+csvfile.close()
+print("Test data processed !")
+
