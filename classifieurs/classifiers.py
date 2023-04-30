@@ -54,6 +54,9 @@ class AdaBoost:
     def score(self, X, y):
         return self.clf.score(X, y)
     
+    def prediction_scores(self, X):
+        return self.clf.decision_function(X)
+    
 class BestClassifierFinder:
     '''
     This class finds the best classifier for a given dataset.
